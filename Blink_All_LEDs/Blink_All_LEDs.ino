@@ -4,6 +4,7 @@ const int TX_LED = PIN_LED_TXL; // TX LED on pin 26, we use the predefined PIN_L
 #include "wiring_private.h"
 
 bool ledState = LOW;
+int pwmSpeed = 127;
 
 void setup() 
 {
@@ -36,32 +37,36 @@ void loop()
     
   moveStraight();
   
-  delay(1000);
+  delay(5000);
   
-  shortBreak();
-  
-  delay(1000);
-
   turnRight();
 
-  delay(1000);
+  delay(225);
 
   shortBreak();
-  
+
   delay(1000);
+//
+//  turnRight();
+//
+//  delay(1000);
+//
+//  shortBreak();
+//  
+//  delay(1000);
   
 }
 
 void moveStraight() {
   //h bridge 1 cw
-  analogWrite(BLUE_LED, 255);
-  digitalWrite(12, HIGH);
-  analogWrite(11, 255);
+  analogWrite(BLUE_LED, 255); //pwm
+  digitalWrite(12, LOW);
+  analogWrite(11, 32);
 
   //h bridge 2 ccw
-  analogWrite(8, 255);
-  digitalWrite(7, LOW);
-  analogWrite(6, 255);
+  analogWrite(6, 255); //pwm
+  digitalWrite(7, HIGH);
+  analogWrite(8, 32);
 }
 
 void turnLeft() {
@@ -91,14 +96,14 @@ void turnRight() {
 
 void moveBackward() {
    //h bridge 1 ccw
-  analogWrite(BLUE_LED, 255);
-  digitalWrite(12, LOW);
-  analogWrite(11, 255);
+  analogWrite(BLUE_LED, pwmSpeed);
+  digitalWrite(12, HIGH);
+  analogWrite(11, pwmSpeed);
 
   //h bridge 2 cw
-  analogWrite(8, 255);
-  digitalWrite(7, HIGH);
-  analogWrite(6, 255);
+  analogWrite(8, pwmSpeed);
+  digitalWrite(7, LOW);
+  analogWrite(6, pwmSpeed);
 }
 
 void shortBreak() {
