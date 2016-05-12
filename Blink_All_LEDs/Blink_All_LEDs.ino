@@ -1,13 +1,21 @@
 const int BLUE_LED = 13; // Blue "stat" LED on pin 13
 const int RX_LED = PIN_LED_RXL; // RX LED on pin 25, we use the predefined PIN_LED_RXL to make sure
 const int TX_LED = PIN_LED_TXL; // TX LED on pin 26, we use the predefined PIN_LED_TXL to make sure
+const int TRIG =  4;
+const int ECHO = 5;
+
 #include "wiring_private.h"
+
+long duration, distance;
 
 bool ledState = LOW;
 int pwmSpeed = 60;
 
 void setup() 
 {
+  SerialUSB.begin(9600); // serial initialize
+  while(!SerialUSB);  // wait for serial to connect  
+  
   pinMode(RX_LED, OUTPUT);
   pinMode(TX_LED, OUTPUT);
   digitalWrite(RX_LED, HIGH);
@@ -27,26 +35,48 @@ void setup()
   pinMode(7, OUTPUT);
   pinMode(6, OUTPUT);
   analogReadResolution(10);
+
+  //ultrasonic sensor
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
 }
 
 void loop() 
 {
-  // Toggle RX and TX LED's
+
   ledState = !ledState;
   digitalWrite(RX_LED, ledState);
   digitalWrite(TX_LED, !ledState);
     
   moveStraight();
-  
+
+  //send ultrasonic signal
+  digitalWrite(TRIG, LOW);  // Added this line
+  delayMicroseconds(2); // Added this line
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(10); // Added this line
+  digitalWrite(TRIG, LOW);
+  duration = pulseIn(ECHO, HIGH);
+  distance = (duration/2) / 29.1;   
   if (analogRead(A0) > 800 || analogRead(A1) > 800) { 
+    SerialUSB.println("a");
+    SerialUSB.println(analogRead(A0));
+    SerialUSB.println("b");
+    SerialUSB.println(analogRead(A1));
     moveBackward();
     delay(2000);
     turnRight();  
   }
+  else if (SerialUSB.available()) {
+    SerialUSB.println("c");
+    SerialUSB.println(distance);
+    if (distance < 50) {
+      turnRight();
+    }
+  }
   
-  else {
  }
-
+  
 //
 //  turnRight();
 //
@@ -56,7 +86,7 @@ void loop()
 //  
 //  delay(1000);
   
-}
+//}
 
 void moveStraight() {
   //h bridge 1 cw
@@ -118,4 +148,3 @@ void shortBreak() {
   //h bridge 2 break
   analogWrite(8,  0);
 }
-
