@@ -58,9 +58,9 @@ void loop()
   digitalWrite(TRIG, LOW);
   duration = pulseIn(ECHO, HIGH);
   distance = (duration/2) / 29.1;   
-  if (analogRead(A0) > 800 || analogRead(A1) > 800) { 
+  if (analogRead(A2) > 800 || analogRead(A1) > 800) { 
     SerialUSB.println("a");
-    SerialUSB.println(analogRead(A0));
+    SerialUSB.println(analogRead(A2));
     SerialUSB.println("b");
     SerialUSB.println(analogRead(A1));
     moveBackward();
@@ -70,7 +70,7 @@ void loop()
   else if (SerialUSB.available()) {
     SerialUSB.println("c");
     SerialUSB.println(distance);
-    if (distance < 50) {
+    if (distance < 50 && distance > 0) {
       turnRight();
     }
   }
