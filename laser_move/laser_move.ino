@@ -9,18 +9,24 @@ Servo servo_1;  // initializes servo object
 #define LINE_SENSOR_LEFT_PIN A2
 #define LINE_SENSOR_RIGHT_PIN A1
 #define LASER_PIN A0
-
 #define SERVO_PIN 10 // need to initialize a pin to run the servo off of, must be PWM compatible 
+#define BLUE_LED 13
+#define RX_LED PIN_LED_RXL
+#define TX_LED PIN_LED_TXL
+#define TRIG 4
+#define ECHO 5
 
 const int pwmSpeed = 70;
-
-const int BLUE_LED = 13; // Blue "stat" LED on pin 13
-const int RX_LED = PIN_LED_RXL; // RX LED on pin 25, we use the predefined PIN_LED_RXL to make sure
-const int TX_LED = PIN_LED_TXL; // TX LED on pin 26, we use the predefined PIN_LED_TXL to make sure
-
-bool ledState = LOW;
+const int ultrasonicDistance = 50;
+const int lineSensor = 800;
 
 double laser_value = 0;
+bool ledState = LOW;
+
+//ultrasonic init
+long duration;
+long distance;
+
 
 // servo initialization code
 uint16_t minpulse = 0.5;
@@ -59,6 +65,11 @@ void setup() {
   pinMode(8, OUTPUT); // speed in a 
   pinMode(7, OUTPUT); // direction in b
   pinMode(6, OUTPUT); // pwm pin on h bridge
+  analogReadResolution(10);
+  
+  //ultrasonic sensor
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
 
   moveStraight(pwmSpeed, pwmSpeed);
 
@@ -114,7 +125,7 @@ void loop()
   //int line_val_right = analogRead(LINE_SENSOR_RIGHT_PIN);
 
   // check ultrasonic sensor
-  //int ulta_value = checkUlta(ULTRA_SONIC_PIN);
+  //int ulta_value = checkUlta();
   
   // get laser position
   //int laser_value = checkLaser(LASER_PIN);
@@ -139,9 +150,16 @@ void loop()
 
 } // end loop
 
-double checkUlta(int pin_selet){
- return analogRead(pin_selet);
-}
+double checkUlta(){
+  digitalWrite(TRIG, LOW);  // Added this line
+  delayMicroseconds(2); // Added this line
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(10); // Added this line
+  digitalWrite(TRIG, LOW);
+  duration = pulseIn(ECHO, HIGH);
+  distance = (duration/2) / 29.1; 
+  return distance
+ }
 
 double checkLaser(int pin_select) {
   double value;
