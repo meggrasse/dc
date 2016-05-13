@@ -10,6 +10,8 @@ long duration, distance;
 
 bool ledState = LOW;
 int pwmSpeed = 60;
+int ultrasonicDistance = 50;
+int lineSensor = 800;
 
 void setup() 
 {
@@ -58,19 +60,19 @@ void loop()
   digitalWrite(TRIG, LOW);
   duration = pulseIn(ECHO, HIGH);
   distance = (duration/2) / 29.1;   
-  if (analogRead(A2) > 800 || analogRead(A1) > 800) { 
-    SerialUSB.println("a");
-    SerialUSB.println(analogRead(A2));
-    SerialUSB.println("b");
-    SerialUSB.println(analogRead(A1));
+  if (analogRead(A2) > lineSensor || analogRead(A1) > lineSensor) { 
+//    SerialUSB.println("a");
+//    SerialUSB.println(analogRead(A2));
+//    SerialUSB.println("b");
+//    SerialUSB.println(analogRead(A1));
     moveBackward();
     delay(2000);
     turnRight();  
   }
   else if (SerialUSB.available()) {
-    SerialUSB.println("c");
-    SerialUSB.println(distance);
-    if (distance < 50 && distance > 0) {
+//    SerialUSB.println("c");
+//    SerialUSB.println(distance);
+    if (distance < ultrasonicDistance && distance > 0) {
       turnRight();
     }
   }

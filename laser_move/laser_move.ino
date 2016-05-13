@@ -27,7 +27,6 @@ bool ledState = LOW;
 long duration;
 long distance;
 
-
 // servo initialization code
 uint16_t minpulse = 0.5;
 uint16_t maxpulse = 2.5;
@@ -80,14 +79,6 @@ void loop()
   ledState = !ledState;
   digitalWrite(RX_LED, ledState);
   digitalWrite(TX_LED, !ledState);
-
-  /*if (analogRead(A0) > 800 || analogRead(A1) > 800) { 
-    moveBackward();
-    delay(2000);
-    turnRight();  
-  }*/
-
-  
   
   scanServo(servoPosition, increment, &servoPosition, &increment);
   
@@ -150,7 +141,7 @@ void loop()
 
 } // end loop
 
-double checkUlta(){
+double checkUlta() {
   digitalWrite(TRIG, LOW);  // Added this line
   delayMicroseconds(2); // Added this line
   digitalWrite(TRIG, HIGH);
@@ -158,7 +149,7 @@ double checkUlta(){
   digitalWrite(TRIG, LOW);
   duration = pulseIn(ECHO, HIGH);
   distance = (duration/2) / 29.1; 
-  return distance
+  return distance;
  }
 
 double checkLaser(int pin_select) {
@@ -171,34 +162,31 @@ double checkLaser(int pin_select) {
 // this function has the servo rotate back and forth, in a "scanning" mode
 void scanServo(int pos,int servoIncrement, int *servoPosition, int *increment) {
  servo_1.write(pos); 
- *servoPosition = pos +servoIncrement;
+ *servoPosition = pos + servoIncrement;
  delay(300);
  //analogWrite(15, 0);
+ 
  if(pos == 180) {
-  
   *servoPosition = pos-servoIncrement;
-  *increment = servoIncrement*-1;
-  
+  *increment = servoIncrement*-1; 
  }
   
  if(pos == 0) {
     *servoPosition = pos-servoIncrement;
     *increment = servoIncrement*-1;
-    
   } // end if
 
  } // end scan servo
 
- void moveStraight(int right_pwm, int left_pwm) {
-  
+void moveStraight(int right_pwm, int left_pwm) {
   //h bridge 1 cw
-  digitalWrite(BLUE_LED, HIGH); //pwm pin
-  digitalWrite(12, LOW);
+  analogWrite(BLUE_LED, 255); //pwm pin
+  digitalWrite(12, HIGH);
   analogWrite(11, right_pwm);
 
-  //h bridge 2 ccw
-  digitalWrite(6, HIGH); //pwm pin
-  digitalWrite(7, HIGH);
+//  //h bridge 2 ccw
+  analogWrite(6, 255); //pwm pin
+  digitalWrite(7, LOW);
   analogWrite(8, left_pwm);
 } // end move straight
 
@@ -228,16 +216,16 @@ void turnRight() {
 } // end turn right
 
 
-void moveBackward() {
+void moveBackward(int right_pwm, int left_pwm) {
    //h bridge 1 ccw
-  analogWrite(BLUE_LED, pwmSpeed);
+  analogWrite(BLUE_LED, 255);
   digitalWrite(12, HIGH);
-  analogWrite(11, pwmSpeed); // why is this pwmSpeed?
+  analogWrite(11, right_pwm);
 
   //h bridge 2 cw
-  analogWrite(8, pwmSpeed);
+  analogWrite(8, 255);
   digitalWrite(7, LOW);
-  analogWrite(6, pwmSpeed); // why is this pwmSpeed?
+  analogWrite(6, left_pwm);
 } // end move backwards
 
 void shortBreak() {

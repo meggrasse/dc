@@ -36,8 +36,8 @@ int count = 0;
 void setup() {
   servo_1.attach(SERVO_PIN, minpulse, maxpulse); // lets the servo pin know it is operating a servo 
   // Serial output code
-  //SerialUSB.begin(9600); // serial initialize
-  //while(!SerialUSB) ;  // wait for serial to connect 
+//  SerialUSB.begin(9600); // serial initialize
+//  while(!SerialUSB) ;  // wait for serial to connect 
 
   pinMode(15, OUTPUT);   // sets the pin as output
   bool ledState = 0;
@@ -67,6 +67,8 @@ void setup() {
   pinMode(ECHO, INPUT);
 
   moveStraight(pwmSpeed, pwmSpeed);
+
+//  SerialUSB.println("here");
 
 }
 
