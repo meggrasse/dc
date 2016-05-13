@@ -13,26 +13,29 @@ Servo servo_1;  // initializes servo object
 #define BLUE_LED 13
 #define RX_LED PIN_LED_RXL
 #define TX_LED PIN_LED_TXL
-#define TRIG 4
-#define ECHO 5
+#define TRIG_LEFT 4
+#define ECHO_LEFT 5
+#define TRIG_RIGHT 2
+#define ECHO_RIGHT 3
 
-const int pwmSpeed = 70;
-const int ultrasonicDistance = 20;
+const int straightSpeed = 70;
+const int turnSpeed = 150;
+const int ultrasonicDistance = 5;
 const int lineSensor = 1000;
 
 //intialize sensors
 double laser_value = 0;
-double ultraDistance = 0;
+double ultraLeftDistance = 0;
+double ultraRightDistance = 0;
 int lineLeft = 0;
 int lineRight = 0;
 double duration = 0;
 double distance = 0;
-
 bool ledState = LOW;
 
 //intialize speed
-int leftSpeed = pwmSpeed;
-int rightSpeed = pwmSpeed;
+int leftSpeed = straightSpeed;
+int rightSpeed = straightSpeed;
 
 // servo initialization code
 uint16_t minpulse = 0.5;
@@ -71,11 +74,13 @@ void setup() {
   pinMode(6, OUTPUT); // pwm pin on h bridge
   analogReadResolution(10);
   
-  //ultrasonic sensor
-  pinMode(TRIG, OUTPUT);
-  pinMode(ECHO, INPUT);
+  //ultrasonic sensors
+  pinMode(TRIG_LEFT, OUTPUT);
+  pinMode(ECHO_LEFT, INPUT);
+  pinMode(TRIG_RIGHT, OUTPUT);
+  pinMode(ECHO_RIGHT, INPUT);
 
-  moveStraight(pwmSpeed, pwmSpeed);
+  moveStraight(straightSpeed, straightSpeed);
 }
 
 void loop() 
@@ -84,60 +89,81 @@ void loop()
   digitalWrite(RX_LED, ledState);
   digitalWrite(TX_LED, !ledState);
 
+  moveStraight(straightSpeed, straightSpeed);
+
   //start servo
   scanServo(servoPosition, increment, &servoPosition, &increment);
 
   //start moving
-  moveStraight(rightSpeed, leftSpeed);
+//  moveStraight(rightSpeed, leftSpeed);
 
   //gather sensor data
   laser_value = checkLaser(LASER_PIN);
-  ultraDistance = checkUltra();
+  ultraLeftDistance = checkUltraLeft();
+  ultraRightDistance = checkUltraRight();
   lineLeft = analogRead(A1);
   lineRight = analogRead(A2);
+//  SerialUSB.println("left");
+//  SerialUSB.println(ultraLeftDistance);
+//  SerialUSB.println("right");
+//  SerialUSB.println(ultraRightDistance);
+
+ //delay(1000);
 
   //make decision
   if (lineLeft > lineSensor || lineRight > lineSensor) { 
 //  SerialUSB.println("line detected");
 //  SerialUSB.println(lineLeft);
 //  SerialUSB.println(lineRight);
-  moveBackward(pwmSpeed, pwmSpeed);
+  moveBackward(straightSpeed, straightSpeed);
   delay(2000);
-  //turnRight();  
+  turnRight(90);  
   }
-  else if (distance < ultrasonicDistance && distance > 0) {
- //   SerialUSB.println("obstacle detected");
-    turnRight();
+//  else if (distance < ultrasonicDistance && distance > 0) {
+// //   SerialUSB.println("obstacle detected");
+//    turnRight(90);
+//  }
+  else if (abs((ultraLeftDistance < ultrasonicDistance) && (ultraRightDistance < ultrasonicDistance) && (ultraLeftDistance - ultraRightDistance) < 10)) {
+    //completely turn
+    turnRight(90);
   }
-  else if (laser_value >= 100 && servoPosition >= 90) {
-   //    SerialUSB.println("laser detected 1");
-       //speed up the right motor
-      leftSpeed = leftSpeed + 20;
+  else if (ultraLeftDistance < ultrasonicDistance) {
+    turnLeft(45);
   }
-  else if (laser_value >= 100 & servoPosition < 90) {
+  else if (ultraRightDistance < ultrasonicDistance) {
+    turnRight(45);
+  }
+  else if (laser_value >= 100 && servoPosition < 90) {
+    turnLeft(servoPosition);
+  }
+  else if (laser_value >= 100 & servoPosition >= 90) {
   //    SerialUSB.println("laser detected 2");
       //speed up the left motor
-      rightSpeed = rightSpeed + 20;
+    turnRight(servoPosition - 90);
   }
-   
-//    if (count >= 8) {
-//      rightSpeed = pwmSpeed;
-//      leftSpeed = pwmSpeed;
-//      count = 0;
-//      }
-//
-//    count++;
   
 } // end loop
 
-double checkUltra() {
-  //send ultrasonic signal and determines distance
-  digitalWrite(TRIG, LOW); 
+double checkUltraLeft() {
+  //send left ultrasonic signal and determine distance
+  digitalWrite(TRIG_LEFT, LOW); 
   delayMicroseconds(2);
-  digitalWrite(TRIG, HIGH);
+  digitalWrite(TRIG_LEFT, HIGH);
   delayMicroseconds(10);
-  digitalWrite(TRIG, LOW);
-  duration = pulseIn(ECHO, HIGH);
+  digitalWrite(TRIG_LEFT, LOW);
+  duration = pulseIn(ECHO_LEFT, HIGH);
+  distance = (duration/2) / 29.1; 
+  return distance;
+ }
+
+ double checkUltraRight() {
+  //send left ultrasonic signal and determine distance
+  digitalWrite(TRIG_RIGHT, LOW); 
+  delayMicroseconds(2);
+  digitalWrite(TRIG_RIGHT, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_RIGHT, LOW);
+  duration = pulseIn(ECHO_RIGHT, HIGH);
   distance = (duration/2) / 29.1; 
   return distance;
  }
@@ -153,7 +179,7 @@ double checkLaser(int pin_select) {
 void scanServo(int pos,int servoIncrement, int *servoPosition, int *increment) {
  servo_1.write(pos); 
  *servoPosition = pos + servoIncrement;
- delay(300);
+ delay(50);
  //analogWrite(15, 0);
  
  if(pos == 180) {
@@ -168,6 +194,34 @@ void scanServo(int pos,int servoIncrement, int *servoPosition, int *increment) {
 
  } // end scan servo
 
+void turnRight(int deg) {
+  //h bridge 1 cw
+  analogWrite(BLUE_LED, 255);
+  digitalWrite(12, LOW);
+  analogWrite(11, turnSpeed);
+
+  //h bridge 2 cw
+  analogWrite(8, turnSpeed);
+  digitalWrite(7, LOW);
+  analogWrite(6, 255);
+
+  delay(40/9 * deg); 
+}
+
+void turnLeft(int deg) {
+   //h bridge 1 cw
+  analogWrite(BLUE_LED, 255);
+  digitalWrite(12, HIGH);
+  analogWrite(11, turnSpeed);
+
+  //h bridge 2 cw
+  analogWrite(8, turnSpeed);
+  digitalWrite(7, HIGH);
+  analogWrite(6, 255);
+
+  delay(40/9 * deg); 
+} // end turn left
+
 void moveStraight(int right_pwm, int left_pwm) {
   //h bridge 1 cw
   analogWrite(BLUE_LED, 255); //pwm pin
@@ -179,32 +233,6 @@ void moveStraight(int right_pwm, int left_pwm) {
   digitalWrite(7, LOW);
   analogWrite(8, left_pwm);
 } // end move straight
-
-
-void turnLeft() {
-   //h bridge 1 cw
-  analogWrite(BLUE_LED, 255);
-  digitalWrite(12, HIGH);
-  analogWrite(11, 255);
-
-  //h bridge 2 cw
-  analogWrite(8, 255);
-  digitalWrite(7, HIGH);
-  analogWrite(6, 255);
-} // end turn left
-
-void turnRight() {
-  //h bridge 1 cw
-  analogWrite(BLUE_LED, 255);
-  digitalWrite(12, LOW);
-  analogWrite(11, 255);
-
-  //h bridge 2 cw
-  analogWrite(8, 255);
-  digitalWrite(7, LOW);
-  analogWrite(6, 255);
-} // end turn right
-
 
 void moveBackward(int right_pwm, int left_pwm) {
    //h bridge 1 ccw
