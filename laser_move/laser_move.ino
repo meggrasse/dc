@@ -48,8 +48,8 @@ int servoDelay = 100;
 void setup() {
   servo_1.attach(SERVO_PIN, minpulse, maxpulse); // lets the servo pin know it is operating a servo 
   // Serial output code
-//  SerialUSB.begin(9600); // serial initialize
-//  while(!SerialUSB) ;  // wait for serial to connect 
+  SerialUSB.begin(9600); // serial initialize
+  while(!SerialUSB) ;  // wait for serial to connect 
 
   // pinMode(15, OUTPUT);
   bool ledState = 0;
@@ -83,7 +83,7 @@ void setup() {
 
   //death spiral
   pinMode(DEATH_SPIRAL_PIN, OUTPUT);
-  //analogWrite(DEATH_SPIRAL_PIN, 255);
+  analogWrite(DEATH_SPIRAL_PIN, 255);
 
   moveStraight(straightSpeed, straightSpeed);
 }
@@ -93,6 +93,8 @@ void loop()
   ledState = !ledState;
   digitalWrite(RX_LED, ledState);
   digitalWrite(TX_LED, !ledState);
+
+  analogWrite(DEATH_SPIRAL_PIN, 255);
 
   shortBreak();
 
@@ -114,79 +116,104 @@ void loop()
 
  //delay(1000);
 
+ // SerialUSB.println("loop");
   //make decision
   //checks if the cup has been found and follows it
   if (laserPos != -1 && !(lineLeft > lineSensor || lineRight > lineSensor)) {
+    SerialUSB.println("cup detected");
+  //  SerialUSB.println(laserPos);
     if (laserPos < 90) {
-      turnRight(laserPos);
+      SerialUSB.println("in first if");
+      turnRight(90 - (laserPos/2 + 45));
       rightSpeed += 50;
       leftSpeed += 50;
       //found the cup!
       while(laserPos != -1) {
+        SerialUSB.println("laserPosbegin");
         moveStraight(rightSpeed, leftSpeed);
         laserPos = scanServoPursue(laserPos);
-        if (laserPos < 90) {
+        SerialUSB.println("laserPos");
+        SerialUSB.println(laserPos);
+        if (laserPos < 90 && laserPos > 0) {
+          SerialUSB.println("turn");
+          SerialUSB.println(90 - (laserPos/2 + 45));
+          turnRight(90 - (laserPos/2 + 45));
         //turn right when pursuing, needs to be tweaked
         }
-        else {
-          turnLeft(laserPos - 90);
+        else if (laserPos > 90) {
+          SerialUSB.println("turn");
+          SerialUSB.println(laserPos/2 - 90 + 45);
+          turnLeft(laserPos/2 - 90 + 45);
         }
       }
      // SerialUSB.println("right");
     }
     else {
      // SerialUSB.println("left");
-      turnLeft(laserPos - 90);
+      SerialUSB.println("in second if");
+      turnLeft(laserPos/2 - 90 + 45);
       rightSpeed += 50;
       leftSpeed += 50;
       while(laserPos != -1) {
+        SerialUSB.println("laserPosbegin");
         moveStraight(rightSpeed, leftSpeed);
         laserPos = scanServoPursue(laserPos);
-        if (laserPos < 90) {
-          turnRight(laserPos);
+        SerialUSB.println("laserPos");
+        SerialUSB.println(laserPos);
+    //    SerialUSB.println(laserPos);
+        if (laserPos < 90 && laserPos > 0) {
+          SerialUSB.println("turn");
+          SerialUSB.println(90 - (laserPos/2 + 45));
+          turnRight(90 - (laserPos/2 + 45));
         }
-        else {
-          turnLeft(laserPos - 90);
+        else if (laserPos > 90) {
+          SerialUSB.println("turn");
+          SerialUSB.println(laserPos/2 - 90 + 45);
+          turnLeft(laserPos/2 - 90 + 45);
         }
-        moveStraight(rightSpeed, leftSpeed);
+        //moveStraight(rightSpeed, leftSpeed);
       }
     }
   }
+
+  else {
+  //dind't fine the cup so it moves forward
+    for (int j = 0; j < 30000; j++) {
+
+   //   SerialUSB.println("walking");
+      moveStraight(straightSpeed, straightSpeed);
   
-  else if (lineLeft > lineSensor || lineRight > lineSensor) { 
+      if (lineLeft > lineSensor || lineRight > lineSensor) { 
 //  SerialUSB.println("line detected");
 //  SerialUSB.println(lineLeft);
 //  SerialUSB.println(lineRight);
-  if (lineLeft > lineSensor && lineRight > lineSensor) {
-    moveBackward(straightSpeed, straightSpeed);
-    delay(2000);
-    turnRight(90);  
-  }
-  else if (lineLeft > lineSensor) {
-    turnRight(90);
-  }
-  else {
-    turnLeft(90);
-  }
- }
-  else if (abs((ultraLeftDistance < ultrasonicDistance) && (ultraRightDistance < ultrasonicDistance) && (ultraLeftDistance - ultraRightDistance) < 10)) { //check if 0 and make into one check
+        if (lineLeft > lineSensor && lineRight > lineSensor) {
+        moveBackward(straightSpeed, straightSpeed);
+        delay(2000);
+        turnRight(90);  
+        }
+        else if (lineLeft > lineSensor) {
+        turnRight(90);
+        }
+        else {
+          turnLeft(90);
+        }
+      }
+      else if (abs((ultraLeftDistance < ultrasonicDistance) && (ultraRightDistance < ultrasonicDistance) && (ultraLeftDistance - ultraRightDistance) < 10) && ultraLeftDistance > 0 && ultraRightDistance > 0) { //check if 0 and make into one check
     //completely turn
-    turnRight(90);
+        turnRight(90);
 //    SerialUSB.println("complete turn");
-  }
-  else if (ultraLeftDistance < ultrasonicDistance) {
-    turnLeft(45);
+      }
+      else if (ultraLeftDistance < ultrasonicDistance) {
+        turnLeft(45);
 //    SerialUSB.println("slight turn left");
-  }
-  else if (ultraRightDistance < ultrasonicDistance) {
-    turnRight(45);
+      }
+      else if (ultraRightDistance < ultrasonicDistance) {
+        turnRight(45);
 //    SerialUSB.println("slight turn right");
-  }
-  else {
-    //not here, keep scouting
-    moveStraight(straightSpeed, straightSpeed);
-    delay(3000);
-  }
+      }
+    } //end for loop
+  } // end else
 } // end loop
 
 double checkUltraLeft() {
@@ -265,21 +292,27 @@ double checkLaser(int pin_select) {
       servo_1.write(90 + count*pursueIncrement);
       delay(servoDelay);
       tempValue1 = analogRead(LASER_PIN);
+      tempLaserPos1 = 90 + count*pursueIncrement;
       servo_1.write(90 - count*pursueIncrement);
       delay(servoDelay);
       tempValue2 = analogRead(LASER_PIN);
+      tempLaserPos2 = 90 - count*pursueIncrement;
       pursueIncrement += 15;
       count++;
+     // SerialUSB.println("while");
     }
-    if (tempValue1 > laserTrigger && tempValue1 > tempValue2) {
+    if (tempValue1 > laserTrigger && tempValue1 >= tempValue2) {
+      //SerialUSB.println(tempLaserPos1);
       return tempLaserPos1;
     }
     else if (tempValue2 > laserTrigger && tempValue2 > tempValue1) {
+     // SerialUSB.println(tempLaserPos2);
       return tempLaserPos2;
     }
     else {
       rightSpeed = straightSpeed;
       leftSpeed = straightSpeed;
+     // SerialUSB.println("else");
       return -1;
     }
   }
