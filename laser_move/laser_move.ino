@@ -19,11 +19,11 @@ Servo servo_1;  // initializes servo object
 #define ECHO_RIGHT 3
 #define DEATH_SPIRAL_PIN 9
 
-const int straightSpeed = 70;
+const int straightSpeed = 120;
 const int turnSpeed = 150;
-const int ultrasonicDistance = 40;
+const int ultrasonicDistance = 30;
 const int lineSensor = 800;
-const int laserTrigger = 500;
+const int laserTrigger = 300;
 
 //intialize sensors
 double laserPos = 0;
@@ -34,6 +34,7 @@ int lineRight = 0;
 double duration = 0;
 double distance = 0;
 bool ledState = LOW;
+bool rightTurnBool = true;
 
 //intialize speed
 int leftSpeed = straightSpeed;
@@ -48,8 +49,8 @@ int servoDelay = 100;
 void setup() {
   servo_1.attach(SERVO_PIN, minpulse, maxpulse); // lets the servo pin know it is operating a servo 
   // Serial output code
-  SerialUSB.begin(9600); // serial initialize
-  while(!SerialUSB) ;  // wait for serial to connect 
+//  SerialUSB.begin(9600); // serial initialize
+//  while(!SerialUSB) ;  // wait for serial to connect 
 
   // pinMode(15, OUTPUT);
   bool ledState = 0;
@@ -90,6 +91,8 @@ void setup() {
 
 void loop() 
 {
+  rightSpeed = straightSpeed;
+  leftSpeed = straightSpeed; 
   ledState = !ledState;
   digitalWrite(RX_LED, ledState);
   digitalWrite(TX_LED, !ledState);
@@ -101,12 +104,13 @@ void loop()
   //start moving
 //  moveStraight(rightSpeed, leftSpeed);
 
+//  SerialUSB.println("loop");
   //gather sensor data
   laserPos = scanServo();
-  ultraLeftDistance = checkUltraLeft();
-  ultraRightDistance = checkUltraRight();
-  lineLeft = analogRead(A1);
-  lineRight = analogRead(A2);
+//  ultraLeftDistance = checkUltraLeft();
+//  ultraRightDistance = checkUltraRight();
+//  lineLeft = analogRead(A1);
+//  lineRight = analogRead(A2);
 //  SerialUSB.println(lineLeft);
 //  SerialUSB.println(lineRight);
 //  SerialUSB.println("left");
@@ -120,29 +124,29 @@ void loop()
   //make decision
   //checks if the cup has been found and follows it
   if (laserPos != -1 && !(lineLeft > lineSensor || lineRight > lineSensor)) {
-    SerialUSB.println("cup detected");
+  //  SerialUSB.println("cup detected");
   //  SerialUSB.println(laserPos);
     if (laserPos < 90) {
-      SerialUSB.println("in first if");
+   //   SerialUSB.println("in first if");
       turnRight(90 - (laserPos/2 + 45));
-      rightSpeed += 50;
-      leftSpeed += 50;
+      rightSpeed = 195;
+      leftSpeed = 225;
       //found the cup!
       while(laserPos != -1) {
-        SerialUSB.println("laserPosbegin");
+     //   SerialUSB.println("laserPosbegin");
         moveStraight(rightSpeed, leftSpeed);
         laserPos = scanServoPursue(laserPos);
-        SerialUSB.println("laserPos");
-        SerialUSB.println(laserPos);
+     //   SerialUSB.println("laserPos");
+     //   SerialUSB.println(laserPos);
         if (laserPos < 90 && laserPos > 0) {
-          SerialUSB.println("turn");
-          SerialUSB.println(90 - (laserPos/2 + 45));
+     //     SerialUSB.println("turn");
+     //     SerialUSB.println(90 - (laserPos/2 + 45));
           turnRight(90 - (laserPos/2 + 45));
         //turn right when pursuing, needs to be tweaked
         }
         else if (laserPos > 90) {
-          SerialUSB.println("turn");
-          SerialUSB.println(laserPos/2 - 90 + 45);
+     //     SerialUSB.println("turn");
+     //     SerialUSB.println(laserPos/2 - 90 + 45);
           turnLeft(laserPos/2 - 90 + 45);
         }
       }
@@ -150,25 +154,25 @@ void loop()
     }
     else {
      // SerialUSB.println("left");
-      SerialUSB.println("in second if");
+     //SerialUSB.println("in second if");
       turnLeft(laserPos/2 - 90 + 45);
-      rightSpeed += 50;
-      leftSpeed += 50;
+      rightSpeed = 195;
+      leftSpeed = 225;
       while(laserPos != -1) {
-        SerialUSB.println("laserPosbegin");
+        //SerialUSB.println("laserPosbegin");
         moveStraight(rightSpeed, leftSpeed);
         laserPos = scanServoPursue(laserPos);
-        SerialUSB.println("laserPos");
-        SerialUSB.println(laserPos);
+        //SerialUSB.println("laserPos");
+        //SerialUSB.println(laserPos);
     //    SerialUSB.println(laserPos);
         if (laserPos < 90 && laserPos > 0) {
-          SerialUSB.println("turn");
-          SerialUSB.println(90 - (laserPos/2 + 45));
+     //     SerialUSB.println("turn");
+     //     SerialUSB.println(90 - (laserPos/2 + 45));
           turnRight(90 - (laserPos/2 + 45));
         }
         else if (laserPos > 90) {
-          SerialUSB.println("turn");
-          SerialUSB.println(laserPos/2 - 90 + 45);
+      //    SerialUSB.println("turn");
+      //    SerialUSB.println(laserPos/2 - 90 + 45);
           turnLeft(laserPos/2 - 90 + 45);
         }
         //moveStraight(rightSpeed, leftSpeed);
@@ -177,42 +181,82 @@ void loop()
   }
 
   else {
+    rightSpeed = straightSpeed;
+    leftSpeed = straightSpeed;
+
+   // SerialUSB.println(rightSpeed);
   //dind't fine the cup so it moves forward
-    for (int j = 0; j < 30000; j++) {
+    for (int j = 0; j < 20; j++) {
 
    //   SerialUSB.println("walking");
-      moveStraight(straightSpeed, straightSpeed);
-  
+      moveStraight(rightSpeed, leftSpeed);
+
+    // SerialUSB.println(j);
+     
+//      if ((j % 25) == 0) {
+//        //SerialUSB.println("increase");
+//        rightSpeed ++;
+//        leftSpeed --; 
+//      }
+
+  //get sensor data
+    ultraLeftDistance = checkUltraLeft();
+    ultraRightDistance = checkUltraRight();
+    lineLeft = analogRead(A1);
+    lineRight = analogRead(A2);
+
+//      SerialUSB.println(lineLeft);
+//      SerialUSB.println(lineRight);
+
       if (lineLeft > lineSensor || lineRight > lineSensor) { 
 //  SerialUSB.println("line detected");
 //  SerialUSB.println(lineLeft);
 //  SerialUSB.println(lineRight);
-        if (lineLeft > lineSensor && lineRight > lineSensor) {
-        moveBackward(straightSpeed, straightSpeed);
-        delay(2000);
-        turnRight(90);  
+        if (lineRight > lineSensor) {
+     //     SerialUSB.println("first if");
+          moveBackward(straightSpeed, straightSpeed);
+          delay(700);
+          turnRight(60); 
+          break; 
         }
-        else if (lineLeft > lineSensor) {
-        turnRight(90);
-        }
+//        else if (lineLeft > lineSensor) {
+//      //    SerialUSB.println("second if");
+//          turnRight(90);
+//          break;
+//        }
         else {
-          turnLeft(90);
+      //    SerialUSB.println("third if");
+          moveBackward(straightSpeed, straightSpeed);
+          delay(700);
+          turnLeft(60);
+          break;
         }
       }
       else if (abs((ultraLeftDistance < ultrasonicDistance) && (ultraRightDistance < ultrasonicDistance) && (ultraLeftDistance - ultraRightDistance) < 10) && ultraLeftDistance > 0 && ultraRightDistance > 0) { //check if 0 and make into one check
     //completely turn
         turnRight(90);
+        break;
 //    SerialUSB.println("complete turn");
       }
       else if (ultraLeftDistance < ultrasonicDistance) {
         turnLeft(45);
+        break;
 //    SerialUSB.println("slight turn left");
       }
       else if (ultraRightDistance < ultrasonicDistance) {
         turnRight(45);
+        break;
 //    SerialUSB.println("slight turn right");
       }
     } //end for loop
+    if (rightTurnBool == true) {
+      turnRight(45);
+      rightTurnBool = false;
+    }
+    else {
+      turnLeft(45);
+      rightTurnBool = true;
+    }
   } // end else
 } // end loop
 
